@@ -1,0 +1,234 @@
+<!-- index.html -->
+
+
+<html>  
+<head>  
+<title>Flask Home</title>  
+</head>  
+<style>
+    a {
+      
+      text-decoration: none;
+  }
+  a:hover {
+    color: dodgerblue;
+  }
+  .container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 20vh;
+    width: 100vw;
+  }
+</style>
+
+<body>  
+    <h2 style="text-align: center;">Hi, welcome to the website</h2>  
+    <article class="container">
+        <a href="/add">Add Employee</a><br><br>
+        <a href ="/view">List Records</a><br><br>
+    </article>
+</body>  
+</html>  
+
+
+<!-- add.html -->
+
+
+<!DOCTYPE html>  
+<html>  
+<head>  
+    <title>Add Employee</title>  
+</head>  
+<style>
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 20vh;
+    width: 100vw;
+  }
+input {
+  margin-bottom: 2px;
+  border: 1px solid dodgerblue;
+  border-radius: 5px;
+  padding: 5px 7px;
+}
+input:focus {
+  border: 2px solid royalblue;
+  outline: 0;
+}
+button {
+    background-color: blue;
+    border-radius: 5px;
+    padding: 5px 8px;
+    color: white;
+    margin: 0px 10px 10px 0px ;
+    border: 0;
+  }
+  button:hover {
+    background-color: dodgerblue;
+  }
+</style>
+<body>  
+    <h2 style="text-align: center;">Employee Information</h2>
+    <article class="container">
+        <form action = "/savedetails" method="post">
+        <table>
+            <tr><td>Name</td><td><input  required type="text" name="name"></td></tr>
+            <tr><td>Email</td><td><input required type="email" name="email"></td></tr>
+            <tr><td>Address</td><td><input required type="text" name="address"></td></tr>
+            <tr><td><button type="submit" value="Submit">Submit</buttontype></button></td></tr>
+        </table>
+        </form>
+    </article>
+</body>  
+</html> 
+
+<!-- savedetails.html -->
+
+<!DOCTYPE html>  
+<html>  
+<head>  
+    <title>save details</title>  
+</head>  
+<style>
+    a{
+        text-decoration: none;
+    }
+    a:hover{
+        color: dodgerblue;
+    }
+</style>
+<body>  
+    <h3>Hi Admin, Details Are Added!!</h3>  
+    <a  href="/view" >View Employees</a>  
+</body>  
+</html>  
+
+
+
+<!-- view.html -->
+
+
+<!DOCTYPE html>  
+<html>  
+<head>  
+    <title>List</title>  
+</head> 
+<style>
+    table,tr{
+    border: 1px solid #c4dcf3;
+    border-collapse: collapse;
+    padding: 10px;
+}
+table{
+    margin: 20px;
+
+}
+td{
+    padding: 10px;
+}
+a {
+    text-decoration: none;
+  }
+  a:hover {
+    color: dodgerblue;
+  }
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 20vh;
+    width: 100vw;
+  }
+</style>
+<body>  
+   
+<h3 style="text-align: center;" >Employee Information</h3>  
+<article class="container">
+    <table border=5>
+        <thead>
+            <td>ID</td>
+            <td>Name</td>
+            <td>Email</td>
+            <td>Address</td>
+        </thead>
+    
+        {% for row in rows %}
+    
+            <tr>
+                <td>{{row["id"]}}</td>
+                <td>{{row["name"]}}</td>
+                <td>{{row["email"]}}</td>
+                <td>{{row["address"]}}</td>
+            </tr>
+    
+        {% endfor %}
+    </table>
+</article>
+<br><br>  
+   
+<a href="/">Home page</a>  
+   
+</body>  
+</html> 
+
+
+
+
+
+<!-- example.py -->
+
+
+
+from flask import Flask, render_template, request
+import sqlite3 
+app = Flask(__name__)
+ 
+con = sqlite3.connect("employee.db")  
+print("Database opened successfully")  
+#con.execute("create table Employees (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, address TEXT NOT NULL)")  
+print("Table created successfully")  
+ 
+@app.route("/")  
+def index():  
+    return render_template("index.html"); 
+ 
+@app.route("/add")  
+def add():  
+    return render_template("add.html")  
+  
+@app.route("/savedetails",methods = ["POST","GET"])  
+def saveDetails():  
+    msg = "msg" 
+    if request.method == "POST":  
+        try:  
+            name = request.form["name"]  
+            email = request.form["email"]  
+            address = request.form["address"]  
+            with sqlite3.connect("employee.db") as con:  
+                cur = con.cursor()  
+                cur.execute("INSERT into Employees (name, email, address) values (?,?,?)",(name,email,address))  
+                con.commit()  
+                msg = "Employee successfully Added" 
+        except:  
+            con.rollback()  
+            msg = "We can not add the employee to the list" 
+        finally:  
+            return render_template("savedetails.html",msg = msg)  
+            con.close()   
+ 
+@app.route("/view")  
+def view():  
+    con = sqlite3.connect("employee.db")  
+    con.row_factory = sqlite3.Row  
+    cur = con.cursor()  
+    cur.execute("select * from Employees")  
+    rows = cur.fetchall()  
+    return render_template("view.html",rows = rows)   
+ 
+    
+if __name__ == '__main__':
+   app.run(debug = True)
